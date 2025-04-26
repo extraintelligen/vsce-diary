@@ -1,0 +1,100 @@
+{
+  "name": "vsce-diary",
+  "displayName": "VS Code Diary revieweer extension",
+  "version": "1.0.0",
+  "description": "A VS Code extension that reads your diaries and provide with AI-powered responses",
+  "publisher": "extraintelligen",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "package": "vsce package",
+    "lint": "eslint src --ext ts"
+  },
+  "categories": [
+    "Other"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "vsce-diary.enableDiaryMode",
+        "title": "Enable Diary Mode"
+      },
+      {
+        "command": "vsce-diary.insertResponse",
+        "title": "Insert Response"
+      }
+    ],
+    "configuration": {
+      "title": "VS Code Diary",
+      "properties": {
+        "vsceDiary.openAIApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your OpenAI API key"
+        },
+        "vsceDiary.openAIApiUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1/chat/completions",
+          "description": "OpenAI API URL"
+        },
+        "vsceDiary.openAIModel": {
+          "type": "string",
+          "default": "gpt-3.5-turbo",
+          "description": "OpenAI Model to use"
+        },
+        "vsceDiary.openAITemperature": {
+          "type": "number",
+          "default": 0.7,
+          "description": "Temperature for OpenAI API"
+        },
+        "vsceDiary.debugMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable or disable debug logging for VS Code Diary extension"
+        },
+        "vsceDiary.roles": {
+          "type": "array",
+          "default": [
+            {
+              "name": "Friend",
+              "prompt": "You are a supportive friend reading my diary entry. Offer kind and constructive feedback. And please be humorous. let's add some happiness to the user's life."
+            },
+            {
+              "name": "idol name",
+              "prompt": "Please asusume you are the idol name. You are reading my diary entry. Offer kind and constructive feedback in the way they will think."
+            }
+          ],
+          "description": "Roles and prompts to use for diary feedback"
+        }
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:extraintelligen/vsce-diary.git"
+  },
+  "keywords": [
+    "diary",
+    "writing",
+    "AI",
+    "feedback"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "@types/vscode": "^1.99.1",
+    "@vscode/vsce": "^3.3.2",
+    "typescript": "^5.8.3",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "axios": "^1.8.4"
+  }
+}

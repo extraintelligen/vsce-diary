@@ -1,17 +1,22 @@
 import { Role } from './types';
+import { Logger } from './logger';
 
 export class PromptService {
+    private logger: Logger;
+    
+    constructor(logger: Logger) {
+        this.logger = logger;
+    }
+    
     /**
      * Builds a system prompt based on the selected role and additional settings
      * @param selectedRole The selected AI role
-     * @param conversationalStyle Whether to use conversational style
      * @param inputTextLength Length of the user's input text to guide response length
      * @param additionalInstructions Optional custom instructions
      * @returns The formatted system prompt
      */
     buildSystemPrompt(
-        selectedRole: Role, 
-        conversationalStyle: boolean = false,
+        selectedRole: Role,
         inputTextLength: number = 0,
         additionalInstructions: string[] = []
     ): string {
@@ -30,11 +35,6 @@ export class PromptService {
         systemPrompt += " Use the same language as the user's input text and use plain text without emoji or other marks.";
         systemPrompt += " Consider the user's input as their diary entry or personal reflection, and tailor your response accordingly.";
         
-        // Add conversational style if enabled
-        if (conversationalStyle) {
-            systemPrompt += " Please respond in a conversational, person-speaking style.";
-        }
-        
         // Add any additional custom instructions
         if (additionalInstructions.length > 0) {
             systemPrompt += " " + additionalInstructions.join(" ");
@@ -49,17 +49,15 @@ export class PromptService {
      * @returns Recommended response length
      */
     private calculateRecommendedLength(inputLength: number): number {
-        // Simple algorithm to determine appropriate response length
-        // For very short inputs, response can be slightly longer
-        // For longer inputs, response should be proportionally shorter
-        if (inputLength < 50) {
-            return Math.max(50, inputLength * 2); // Min 50 chars for very short inputs
-        } else if (inputLength < 200) {
-            return inputLength * 1.5;
-        } else if (inputLength < 500) {
-            return inputLength;
+        let recommendedLength: number;
+        
+        if (inputLength < 200) {
+            recommendedLength = inputLength;
         } else {
-            return Math.min(1000, inputLength * 0.8); // Cap at 1000 chars for very long inputs
+            recommendedLength = Math.min(200, inputLength * 0.8); 
         }
+        
+        this.logger.log(`Input length: ${inputLength}, Recommended length: ${recommendedLength}`);
+        return recommendedLength;
     }
 }

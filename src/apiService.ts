@@ -13,7 +13,7 @@ export class ApiService {
     constructor(logger: Logger, outputChannel: vscode.OutputChannel) {
         this.logger = logger;
         this.outputChannel = outputChannel;
-        this.promptService = new PromptService();
+        this.promptService = new PromptService(logger);
     }
 
     async generateResponse(
@@ -23,9 +23,8 @@ export class ApiService {
         apiUrl: string | undefined, 
         model: string | undefined, 
         temperature: number | undefined,
-        conversationalStyle: boolean | undefined,
         debugMode: boolean
-    ): Promise<{ response: string, reasoningContent: string } | null> {
+    ): Promise<{ response: string, reasoningContent: string, isMeaningfulText: boolean } | null> {
         // Show a loading indicator
         this.outputChannel.show(true);
         this.outputChannel.clear();
@@ -41,13 +40,15 @@ export class ApiService {
             this.logger.log(`URL: ${apiUrl || 'https://api.openai.com/v1/chat/completions'}`);
             this.logger.log(`Model: ${model || 'gpt-3.5-turbo'}`);
             this.logger.log(`Temperature: ${temperature || 0.7}`);
-            this.logger.log(`Conversational Style: ${conversationalStyle ? 'enabled' : 'disabled'}`);
             this.logger.log(`System prompt: ${selectedRole.prompt}`);
             this.logger.log(`User input: ${text}`);
             this.logger.log(`Using streaming API: true`);
             
             // Get the system prompt using the PromptService
-            const systemPrompt = this.promptService.buildSystemPrompt(selectedRole, conversationalStyle);
+            const systemPrompt = this.promptService.buildSystemPrompt(selectedRole) + 
+                "\n\nFirst, evaluate if the user's input is meaningful for a diary entry or just trivial information like a name, date, or random characters. " + 
+                "If the input is NOT meaningful (just a name, date, greeting, or trivial text), start your response with exactly: " +
+                "\"[NOT_MEANINGFUL_INPUT]\" and then provide a brief explanation. If the input IS meaningful, respond normally without this marker.";
             
             const requestPayload: OpenAIRequestPayload = {
                 model: model || 'gpt-3.5-turbo',
@@ -70,6 +71,7 @@ export class ApiService {
                 let fullResponse = '';
                 let reasoningContent = '';
                 let isAnswering = false;
+                let isMeaningfulText = true; // Default to true
                 
                 // Clear and prepare the output channel
                 this.outputChannel.clear();
@@ -134,6 +136,13 @@ export class ApiService {
                                                 }
                                                 fullResponse += delta.content;
                                                 this.outputChannel.append(delta.content);
+                                                
+                                                // Check if this chunk contains the NOT_MEANINGFUL_INPUT marker
+                                                // Only look at start of response to avoid false positives in the middle of text
+                                                if (fullResponse.length < 50 && fullResponse.includes('[NOT_MEANINGFUL_INPUT]')) {
+                                                    isMeaningfulText = false;
+                                                    this.logger.log('Input detected as not meaningful for a diary entry.');
+                                                }
                                             }
                                         }
                                     } catch (e) {
@@ -149,7 +158,17 @@ export class ApiService {
                     response.data.on('end', () => {
                         const endTime = Date.now();
                         this.logger.log(`Stream completed. Total response time: ${endTime - startTime}ms`);
-                        resolve({ response: fullResponse, reasoningContent });
+                        
+                        // If the text wasn't meaningful, we might want to remove the marker from the response
+                        if (!isMeaningfulText && fullResponse.includes('[NOT_MEANINGFUL_INPUT]')) {
+                            fullResponse = fullResponse.replace('[NOT_MEANINGFUL_INPUT]', '').trim();
+                        }
+                        
+                        resolve({ 
+                            response: fullResponse, 
+                            reasoningContent, 
+                            isMeaningfulText 
+                        });
                     });
                     
                     response.data.on('error', (err: Error) => {

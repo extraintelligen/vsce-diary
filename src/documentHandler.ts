@@ -47,24 +47,32 @@ export class DocumentHandler {
     }
     
     /**
-     * Insert response into current document
+     * Insert AI response into the current document
+     * @param response The AI response text to insert
+     * @param roleName Optional role name to include in the header
      */
-    static async insertResponse(response: string, roleName: string | undefined): Promise<boolean> {
+    public static async insertResponse(response: string, roleName?: string): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showErrorMessage('No active editor found.');
-            return false;
+            return;
         }
         
-        // Insert the response at the end of the document
+        // Create delimiter line with equal signs
+        const delimiter = "=".repeat(50);
+        
+        // Format the response with delimiters and optional role attribution
+        const formattedResponse = `\n\n${delimiter}\n${roleName ? `Response from ${roleName}:\n\n` : ''}${response}\n${delimiter}\n\n`;
+        
+        // Get position at the end of the document
         const position = new vscode.Position(editor.document.lineCount, 0);
-        await editor.edit((editBuilder) => {
-            editBuilder.insert(
-                position, 
-                `\n\n## Feedback from ${roleName}\n\n${response}\n`
-            );
+        
+        // Insert the formatted response
+        await editor.edit(editBuilder => {
+            editBuilder.insert(position, formattedResponse);
         });
         
-        return true;
+        // Move cursor to the end
+        const newPosition = new vscode.Position(editor.document.lineCount, 0);
+        editor.selection = new vscode.Selection(newPosition, newPosition);
     }
 }

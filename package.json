@@ -1,6 +1,6 @@
 {
   "name": "vsce-diary",
-  "displayName": "VS Code Diary revieweer extension",
+  "displayName": "Diary Assistant",
   "version": "1.0.0",
   "description": "A VS Code extension that reads your diaries and provide with AI-powered responses",
   "publisher": "extraintelligen",
@@ -23,11 +23,11 @@
     "commands": [
       {
         "command": "vsce-diary.enableDiaryMode",
-        "title": "Enable Diary Mode"
+        "title": "Diary: Enable Diary Mode"
       },
       {
         "command": "vsce-diary.insertResponse",
-        "title": "Insert Response"
+        "title": "Diary: Insert Response"
       }
     ],
     "configuration": {

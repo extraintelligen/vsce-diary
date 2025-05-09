@@ -2,6 +2,8 @@
 
 A VS Code extension that provides comments to your diaries, in the way of people you admire.
 
+Co-developed with GitHub Copilot.
+
 ## Features
 
 - Write diary in vscode and get AI-powered feedback on your writings in real-time

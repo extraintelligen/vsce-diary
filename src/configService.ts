@@ -54,4 +54,24 @@ export class ConfigService {
     public getConfig(): DiaryServiceConfig {
         return this.config;
     }
+    
+    public getApiKey(): string | undefined {
+        return this.config.apiKey;
+    }
+    
+    public getApiUrl(): string | undefined {
+        return this.config.apiUrl;
+    }
+    
+    public getModel(): string | undefined {
+        return this.config.model;
+    }
+    
+    public getTemperature(): number | undefined {
+        return this.config.temperature;
+    }
+    
+    public getDebugMode(): boolean {
+        return this.config.debugMode;
+    }
 }

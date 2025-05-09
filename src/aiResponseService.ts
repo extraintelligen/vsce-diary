@@ -15,29 +15,31 @@ export class AIResponseService {
     }
 
     public async generateResponse(text: string, role: Role): Promise<string | undefined> {
-        const config = this.configService.getConfig();
-        if (!config.apiKey) {
-            throw new Error('OpenAI API key not configured. Please set it in extension settings.');
+        const apiKey = this.configService.getApiKey();
+        const apiUrl = this.configService.getApiUrl();
+        const model = this.configService.getModel();
+        const temperature = this.configService.getTemperature();
+        const debugMode = this.configService.getDebugMode();
+
+        if (!apiKey) {
+            throw new Error('API key not configured');
         }
-        
-        // We need conversational style instead of input length to match the API signature
-        const conversationalStyle = false; // Default value or get from config if available
-        
-        const result = await this.apiService.generateResponse(
+
+        const response = await this.apiService.generateResponse(
             text,
             role,
-            config.apiKey,
-            config.apiUrl,
-            config.model,
-            config.temperature,
-            conversationalStyle,
-            config.debugMode
+            apiKey,
+            apiUrl,
+            model,
+            temperature,
+            debugMode
         );
-        
-        if (result) {
-            return result.response;
+
+        if (response && !response.isMeaningfulText) {
+            this.logger.log('Skipping response for non-meaningful input');
+            return undefined;
         }
-        
-        return undefined;
+
+        return response?.response;
     }
 }

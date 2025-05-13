@@ -1,4 +1,4 @@
-# VS Code Diary
+# VS Code Extension To Provide Comments On Diaries
 
 A VS Code extension that provides comments to your diaries, in the way of people you admire.
 
@@ -77,3 +77,9 @@ You can configure the extension in VS Code settings:
 ## License
 
 ISC License
+
+## Techniques in Vibe Coding
+some techniques are used in building this extension with Github Copilot
+- Start from a *classic and simple codebase*, such as a simple hello world extension, or some demo project used to teach users in the official documentation.(which helps the author to understand the structure of the project and make sure what changes are being made by the Copilot) 
+- *Write documenation before start* make further changes to the code, create a folder for the requirements and tasks, and split the tasks into smaller ones, and create a file for the TODO list.
+- r*efer to the TODO list of very small tasks*, tell the Copilot to do one task at a time, and then commit every small change of the project once it is a newer and availble version.(which makes it easier to rollback to the previous version if something goes wrong after changes from Copilot)

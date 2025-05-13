@@ -3,90 +3,71 @@ import * as vscode from 'vscode';
 export class ResponseViewService {
     private responsePanel: vscode.WebviewPanel | undefined;
     private context: vscode.ExtensionContext;
-    private insertCallback: () => void;
+    private insertCallback: (content: string) => void;
+    private currentResponse: string = '';
 
-    constructor(context: vscode.ExtensionContext, insertCallback: () => void) {
+    constructor(context: vscode.ExtensionContext, insertCallback: (content: string) => void) {
         this.context = context;
         this.insertCallback = insertCallback;
     }
 
     public showResponse(response: string, roleName?: string) {
+        // Store the current response
+        this.currentResponse = response;
+        
         // Check if panel exists and is not disposed
         if (!this.responsePanel) {
             // Create new panel
-            this.responsePanel = vscode.window.createWebviewPanel(
-                'diaryResponse',
-                'AI Diary Response',
-                { 
-                    viewColumn: vscode.ViewColumn.Beside, 
-                    preserveFocus: true 
-                },
-                { 
-                    enableScripts: true,
-                    retainContextWhenHidden: true
-                }
-            );
-
-            // Handle messages from the webview
-            this.responsePanel.webview.onDidReceiveMessage(
-                async message => {
-                    switch (message.command) {
-                        case 'insertResponse':
-                            await this.insertCallback();
-                            break;
-                    }
-                },
-                undefined,
-                this.context.subscriptions
-            );
-
-            // Clean up resources when panel is closed
-            this.responsePanel.onDidDispose(() => {
-                this.responsePanel = undefined;
-            });
+            this.createResponsePanel();
         } else {
+            // Panel exists, check if it's still valid by revealing it
             try {
-                // Try to access the panel to see if it's still valid
-                // This property access will throw if the panel is disposed
-                const isVisible = this.responsePanel.visible;
+                this.responsePanel.reveal(vscode.ViewColumn.Beside, true);
             } catch (e) {
-                // Panel was disposed, need to create a new one
+                // If revealing fails, panel was likely disposed, so create a new one
                 this.responsePanel = undefined;
-                this.responsePanel = vscode.window.createWebviewPanel(
-                    'diaryResponse',
-                    'AI Diary Response',
-                    { 
-                        viewColumn: vscode.ViewColumn.Beside, 
-                        preserveFocus: true 
-                    },
-                    { 
-                        enableScripts: true,
-                        retainContextWhenHidden: true
-                    }
-                );
-
-                // Handle messages from the webview
-                this.responsePanel.webview.onDidReceiveMessage(
-                    async message => {
-                        switch (message.command) {
-                            case 'insertResponse':
-                                await this.insertCallback();
-                                break;
-                        }
-                    },
-                    undefined,
-                    this.context.subscriptions
-                );
-
-                // Clean up resources when panel is closed
-                this.responsePanel.onDidDispose(() => {
-                    this.responsePanel = undefined;
-                });
+                this.createResponsePanel();
             }
         }
 
         // Update panel content
-        this.responsePanel.webview.html = this.getWebviewContent(response, roleName);
+        if (this.responsePanel) {
+            this.responsePanel.webview.html = this.getWebviewContent(response, roleName);
+        }
+    }
+
+    // Helper method to create the response panel
+    private createResponsePanel() {
+        this.responsePanel = vscode.window.createWebviewPanel(
+            'diaryResponse',
+            'AI Diary Response',
+            { 
+                viewColumn: vscode.ViewColumn.Beside, 
+                preserveFocus: true 
+            },
+            { 
+                enableScripts: true,
+                retainContextWhenHidden: true
+            }
+        );
+
+        // Handle messages from the webview
+        this.responsePanel.webview.onDidReceiveMessage(
+            async message => {
+                switch (message.command) {
+                    case 'insertResponse':
+                        await this.insertCallback(this.currentResponse);
+                        break;
+                }
+            },
+            undefined,
+            this.context.subscriptions
+        );
+
+        // Clean up resources when panel is closed
+        this.responsePanel.onDidDispose(() => {
+            this.responsePanel = undefined;
+        });
     }
 
     private getWebviewContent(markdownContent: string, roleName?: string) {
@@ -130,6 +111,29 @@ export class ResponseViewService {
                     border-radius: 2px;
                 }
                 button:hover {
+                    background-color: var(--vscode-button-hoverBackground
+                }
+                .header {
+                    margin-bottom: 15px;
+                }
+                .response-content {
+                    flex-grow: 1;
+                    overflow-y: auto;
+                    margin-bottom: 15px;
+                    white-space: pre-wrap;
+                }
+                .button-container {
+                    text-align: right;
+                }
+                button {
+                    padding: 8px 16px;
+                    background-color: var(--vscode-button-background);
+                    color: var(--vscode-button-foreground);
+                    border: none;
+                    cursor: pointer;
+                    border-radius: 2px;
+                }
+                button:hover {
                     background-color: var(--vscode-button-hoverBackground);
                 }
                 h3 {
@@ -149,7 +153,7 @@ export class ResponseViewService {
                     <pre>${markdownContent}</pre>
                 </div>
                 <div class="button-container">
-                    <button id="insertBtn">Insert at Cursor</button>
+                    <button id="insertBtn">Insert in Editor</button>
                 </div>
             </div>
             <script>
